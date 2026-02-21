@@ -459,6 +459,7 @@ HTML_TEMPLATE = """
             letter-spacing: 1px;
         }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script>
         async function analyzeIdea(ideaId) {
             const btn = document.getElementById(`btn-${ideaId}`);
@@ -491,6 +492,19 @@ HTML_TEMPLATE = """
                 const url = encodeURIComponent(window.location.href);
                 document.getElementById('share-twitter').href = `https://twitter.com/intent/tweet?text=${text}&url=${url}`;
                 document.getElementById('share-wa').href = `https://wa.me/?text=${text} ${url}`;
+
+                // Export PDF Handler
+                document.getElementById('btn-pdf').onclick = () => {
+                    const element = document.getElementById('modal-content');
+                    const opt = {
+                        margin: 10,
+                        filename: `business-plan-${data.id}.pdf`,
+                        image: { type: 'jpeg', quality: 0.98 },
+                        html2canvas: { scale: 2, useCORS: true },
+                        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                    };
+                    html2pdf().set(opt).from(element).save();
+                };
 
                 const modal = document.getElementById('modal');
                 modal.style.display = 'flex';
@@ -631,7 +645,7 @@ HTML_TEMPLATE = """
 
     <!-- Modal -->
     <div id="modal" class="modal-overlay" onclick="if(event.target === this) closeModal()">
-        <div class="modal-content">
+        <div class="modal-content" id="modal-content">
             <button class="close-btn" onclick="closeModal()">×</button>
             
             <div class="modal-header">
@@ -657,9 +671,10 @@ HTML_TEMPLATE = """
                 <p style="margin: 0"><strong style="color: #fff">Celah Kompetitor:</strong> <span id="m-comp"></span></p>
             </div>
 
-            <div style="margin-top: 24px; display: flex; gap: 12px;">
-                <a id="share-twitter" target="_blank" style="flex: 1; text-align: center; background: #1da1f2; color: white; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: bold;">Share Twitter</a>
-                <a id="share-wa" target="_blank" style="flex: 1; text-align: center; background: #25d366; color: white; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: bold;">Share WA</a>
+            <div style="margin-top: 24px; display: flex; gap: 12px; flex-wrap: wrap;">
+                <a id="share-twitter" target="_blank" style="flex: 1; text-align: center; background: #1da1f2; color: white; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: bold; cursor: pointer;">Share Twitter</a>
+                <a id="share-wa" target="_blank" style="flex: 1; text-align: center; background: #25d366; color: white; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: bold; cursor: pointer;">Share WA</a>
+                <button id="btn-pdf" style="flex: 1; background: #ff4757; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer;">Download PDF</button>
             </div>
         </div>
     </div>
