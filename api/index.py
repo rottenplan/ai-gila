@@ -836,7 +836,7 @@ HTML_TEMPLATE = """
             {% if ideas %}
             <div class="ideas-grid">
                 {% for idea, score in ideas %}
-                <div class="idea-card" data-idea="{{ idea|tojson }}" data-score="{{ score }}">
+                <div class="idea-card" data-idea="{{ idea|tojson|forceescape }}" data-score="{{ score }}">
                     <button class="btn-save" onclick="handleSaveClick(this)">🔖</button>
                     <div class="card-top">
                         <h3 class="idea-title">
