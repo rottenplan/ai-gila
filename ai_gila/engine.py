@@ -221,6 +221,50 @@ class Engine:
         with open(p, "w", encoding="utf-8") as f:
             f.write(html)
         return p
+    
+    def generate_business_plan(self, idea: Idea) -> Dict:
+        """Generates a detailed business analysis for the idea."""
+        # MVP Features based on pain
+        pain_to_features = {
+            "ekstraksi data": ["Parser dokumen otomatis", "API export JSON/CSV", "Integrasi WhatsApp/Telegram"],
+            "otomasi dokumen": ["Template editor drag-and-drop", "Tanda tangan digital", "Version control dokumen"],
+            "deteksi penipuan": ["Real-time alert system", "Risk scoring dashboard", "Integrasi data historis"],
+            "pencarian semantik": ["Search bar natural language", "Indexing dokumen PDF/Word", "Highlight jawaban otomatis"],
+            "penjadwalan": ["Sinkronisasi Google Calendar", "Booking page custom", "Reminder WhatsApp otomatis"],
+            "personalizer": ["Tracking behavior user", "Rekomendasi produk dinamis", "A/B testing tools"],
+            "audit lingkungan": ["Kalkulator jejak karbon", "Scan struk/invoice", "Laporan compliance standar"],
+            "manajemen stok": ["Prediksi demand AI", "Alert stok menipis", "Integrasi POS"],
+        }
+        
+        # Determine base pain key from title/desc (simplified logic)
+        mvp_features = ["Dashboard Analytics", "User Management", "Payment Gateway"] # Defaults
+        for key, feats in pain_to_features.items():
+            if key in idea.title.lower() or key in idea.description.lower():
+                mvp_features = feats
+                break
+        
+        # Marketing Hooks
+        hooks = [
+            f"Cara termudah untuk {idea.niche} mengelola {idea.title.split('untuk')[0].strip()}.",
+            f"Lupakan cara lama. Ini revolusi {idea.niche} berbasis AI.",
+            f"Hemat 10+ jam per minggu dengan {idea.title}."
+        ]
+        
+        # Revenue Projection (Simulation)
+        price_idr = int(idea.price * 15000)
+        users_milestone = [10, 100, 1000]
+        revenue_proj = []
+        for u in users_milestone:
+            rev = u * price_idr
+            revenue_proj.append({"users": u, "revenue": rev, "revenue_fmt": f"Rp{rev:,}"})
+            
+        return {
+            "mvp_features": mvp_features,
+            "marketing_hooks": hooks,
+            "revenue_projection": revenue_proj,
+            "strategy": f"Fokus pada komunitas {idea.niche} di Facebook/LinkedIn. Tawarkan trial gratis untuk 10 user pertama sebagai validasi.",
+            "competitor_sim": "Market leader saat ini generik & mahal. Peluang masuk lewat harga terjangkau & fitur spesifik."
+        }
 
     def _landing_template(self, idea: Idea, variant: str) -> str:
         # Variant logic
