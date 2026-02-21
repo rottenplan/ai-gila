@@ -266,6 +266,22 @@ class Engine:
             "competitor_sim": "Market leader saat ini generik & mahal. Peluang masuk lewat harga terjangkau & fitur spesifik."
         }
 
+    def consult(self, question: str) -> str:
+        """Simple rule-based consultant for business questions."""
+        q = question.lower()
+        if "modal" in q or "biaya" in q:
+            return "Untuk tahap awal, fokus pada MVP tanpa kode (No-Code) atau gunakan API murah. Estimasi modal awal bisa ditekan di bawah Rp 1 juta jika Anda mengerjakan sendiri teknis dasarnya."
+        elif "pemasaran" in q or "marketing" in q or "promosi" in q:
+            return "Gunakan strategi 'Cold DM' di LinkedIn atau Instagram ke target niche spesifik. Buat konten edukasi pendek di TikTok/Reels tentang masalah yang dihadapi niche tersebut."
+        elif "validasi" in q or "ide" in q:
+            return "Jangan buat produk dulu! Buat landing page sederhana (seperti yang diexport alat ini), sebar ke komunitas, dan lihat apakah ada yang klik tombol 'Beli' atau daftar waitlist."
+        elif "harga" in q or "pricing" in q:
+            return "Jangan jual terlalu murah. Niche market berani bayar mahal untuk solusi spesifik. Mulai dari harga yang membuat Anda sedikit tidak nyaman (sedikit mahal), lalu berikan diskon untuk early adopter."
+        elif "teknis" in q or "coding" in q:
+            return "Gunakan stack yang Anda kuasai. Python/Flask (seperti ini) sudah cukup. Jangan terjebak memilih teknologi canggih tapi tidak ada user."
+        else:
+            return "Pertanyaan menarik. Fokus utama Anda saat ini seharusnya adalah: Validasi -> Distribusi -> Produk. Apakah Anda sudah memvalidasi ide ke calon user?"
+
     def _landing_template(self, idea: Idea, variant: str) -> str:
         # Variant logic
         cta_text = "Dapatkan Akses Awal"

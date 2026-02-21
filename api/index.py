@@ -313,6 +313,119 @@ HTML_TEMPLATE = """
         th { color: var(--text-muted); font-weight: 500; font-size: 0.9rem; }
         .money { font-family: 'Space Grotesk'; color: #48bb78; font-weight: 700; }
 
+        /* Chat Widget */
+        .chat-widget {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transition: all 0.3s;
+            z-index: 2000;
+        }
+
+        .chat-widget:hover {
+            transform: scale(1.1);
+        }
+
+        .chat-icon {
+            font-size: 28px;
+            color: white;
+        }
+
+        .chat-window {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            width: 350px;
+            height: 500px;
+            background: #111725;
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            display: none;
+            flex-direction: column;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            z-index: 2000;
+            overflow: hidden;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        .chat-header {
+            background: rgba(255,255,255,0.05);
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .chat-body {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .chat-input-area {
+            padding: 16px;
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input {
+            flex: 1;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 10px 16px;
+            color: #fff;
+            outline: none;
+        }
+
+        .chat-send {
+            background: var(--accent-primary);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            color: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .msg {
+            max-width: 80%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .msg-ai {
+            background: rgba(255,255,255,0.1);
+            align-self: flex-start;
+            border-bottom-left-radius: 2px;
+        }
+
+        .msg-user {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 2px;
+        }
+
         /* Animations */
         @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -375,6 +488,53 @@ HTML_TEMPLATE = """
                 modal.style.display = 'none';
             }, 300);
         }
+
+        function toggleChat() {
+            const chat = document.getElementById('chat-window');
+            if (chat.style.display === 'flex') {
+                chat.style.display = 'none';
+            } else {
+                chat.style.display = 'flex';
+            }
+        }
+
+        async function sendChat() {
+            const input = document.getElementById('chat-input');
+            const msg = input.value.trim();
+            if (!msg) return;
+
+            // Add user message
+            const body = document.getElementById('chat-body');
+            body.innerHTML += `<div class="msg msg-user">${msg}</div>`;
+            input.value = '';
+            body.scrollTop = body.scrollHeight;
+
+            // Simulate thinking
+            const thinkingId = 'thinking-' + Date.now();
+            body.innerHTML += `<div id="${thinkingId}" class="msg msg-ai">...</div>`;
+            
+            try {
+                const res = await fetch('/consult', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({question: msg})
+                });
+                const data = await res.json();
+                
+                document.getElementById(thinkingId).remove();
+                body.innerHTML += `<div class="msg msg-ai">${data.answer}</div>`;
+                body.scrollTop = body.scrollHeight;
+            } catch (e) {
+                document.getElementById(thinkingId).innerText = "Maaf, error koneksi.";
+            }
+        }
+
+        // Allow Enter key to send
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('chat-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendChat();
+            });
+        });
     </script>
 </head>
 <body>
@@ -425,6 +585,25 @@ HTML_TEMPLATE = """
             {% endfor %}
         </div>
         {% endif %}
+    </div>
+
+    <!-- Chat Widget -->
+    <div class="chat-widget" onclick="toggleChat()">
+        <span class="chat-icon">💬</span>
+    </div>
+
+    <div id="chat-window" class="chat-window">
+        <div class="chat-header">
+            <span style="font-weight:bold; color:var(--accent-primary)">AI Consultant</span>
+            <span style="cursor:pointer" onclick="toggleChat()">×</span>
+        </div>
+        <div id="chat-body" class="chat-body">
+            <div class="msg msg-ai">Halo! Saya konsultan bisnis AI Anda. Ada yang bisa saya bantu tentang ide, validasi, atau teknis?</div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="chat-input" class="chat-input" placeholder="Tanya sesuatu...">
+            <button class="chat-send" onclick="sendChat()">➤</button>
+        </div>
     </div>
 
     <!-- Modal -->
@@ -492,6 +671,14 @@ def analyze(idea_id):
         "description": idea.description,
         "plan": plan
     })
+
+@app.route('/consult', methods=['POST'])
+def consult():
+    data = request.get_json()
+    q = data.get('question', '')
+    answer = eng.consult(q)
+    return jsonify({"answer": answer})
+
 
 
 # Vercel requires the app to be named 'app'
