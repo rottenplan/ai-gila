@@ -525,6 +525,9 @@ HTML_TEMPLATE = """
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script>
+        // Store current analyzed idea
+        let currentAnalyzedIdea = null;
+
         async function analyzeIdea(btn) {
             // Get idea data from the parent card
             const card = btn.closest('.idea-card');
@@ -534,6 +537,7 @@ HTML_TEMPLATE = """
                 const raw = card.dataset.idea;
                 // If it's already an object (rare in dataset), use it, otherwise parse
                 ideaData = typeof raw === 'string' ? JSON.parse(raw) : raw;
+                currentAnalyzedIdea = ideaData; // Store globally
             } catch (e) {
                 alert("Error data idea");
                 return;
@@ -553,6 +557,9 @@ HTML_TEMPLATE = """
                 
                 const data = await res.json();
                 
+                // Merge plan data into currentAnalyzedIdea for context
+                currentAnalyzedIdea.plan = data.plan;
+
                 document.getElementById('m-logo').innerHTML = data.plan.logo_svg;
                 document.getElementById('m-title').innerText = data.title;
                 document.getElementById('m-desc').innerText = data.description;
@@ -659,6 +666,7 @@ HTML_TEMPLATE = """
         function closeModal() {
             const modal = document.getElementById('modal');
             modal.classList.remove('active');
+            currentAnalyzedIdea = null; // Reset context
             setTimeout(() => {
                 modal.style.display = 'none';
             }, 300);
@@ -688,11 +696,17 @@ HTML_TEMPLATE = """
             const thinkingId = 'thinking-' + Date.now();
             body.innerHTML += `<div id="${thinkingId}" class="msg msg-ai">...</div>`;
             
+            // Prepare payload with context
+            const payload = {
+                question: msg,
+                context: currentAnalyzedIdea // Send current idea context if available
+            };
+
             try {
                 const res = await fetch('/consult', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({question: msg})
+                    body: JSON.stringify(payload)
                 });
                 const data = await res.json();
                 
@@ -1017,7 +1031,9 @@ def analyze():
 def consult():
     data = request.get_json()
     q = data.get('question', '')
-    answer = eng.consult(q)
+    context = data.get('context') # Get context if available
+    
+    answer = eng.consult(q, context)
     return jsonify({"answer": answer})
 
 @app.route('/generate-landing', methods=['POST'])

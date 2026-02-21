@@ -521,21 +521,92 @@ class Engine:
             {overlay}
         </svg>"""
 
-    def consult(self, question: str) -> str:
-        """Simple rule-based consultant for business questions."""
+    def consult(self, question: str, context: Dict = None) -> str:
+        """Enhanced rule-based consultant with context awareness."""
         q = question.lower()
-        if "modal" in q or "biaya" in q:
-            return "Untuk tahap awal, fokus pada MVP tanpa kode (No-Code) atau gunakan API murah. Estimasi modal awal bisa ditekan di bawah Rp 1 juta jika Anda mengerjakan sendiri teknis dasarnya."
-        elif "pemasaran" in q or "marketing" in q or "promosi" in q:
-            return "Gunakan strategi 'Cold DM' di LinkedIn atau Instagram ke target niche spesifik. Buat konten edukasi pendek di TikTok/Reels tentang masalah yang dihadapi niche tersebut."
-        elif "validasi" in q or "ide" in q:
-            return "Jangan buat produk dulu! Buat landing page sederhana (seperti yang diexport alat ini), sebar ke komunitas, dan lihat apakah ada yang klik tombol 'Beli' atau daftar waitlist."
-        elif "harga" in q or "pricing" in q:
-            return "Jangan jual terlalu murah. Niche market berani bayar mahal untuk solusi spesifik. Mulai dari harga yang membuat Anda sedikit tidak nyaman (sedikit mahal), lalu berikan diskon untuk early adopter."
-        elif "teknis" in q or "coding" in q:
-            return "Gunakan stack yang Anda kuasai. Python/Flask (seperti ini) sudah cukup. Jangan terjebak memilih teknologi canggih tapi tidak ada user."
-        else:
-            return "Pertanyaan menarik. Fokus utama Anda saat ini seharusnya adalah: Validasi -> Distribusi -> Produk. Apakah Anda sudah memvalidasi ide ke calon user?"
+        
+        # Context-aware responses
+        if context:
+            title = context.get('title', 'ide bisnis ini')
+            niche = context.get('niche', 'niche ini')
+            model = context.get('model', 'model ini')
+            price = context.get('price', 0)
+            
+            if "bagus" in q or "prospek" in q or "pendapat" in q:
+                if context.get('trend_score', 0) > 0.7:
+                    return f"Ide '{title}' sangat potensial karena sedang trending! Fokus pada niche {niche} adalah langkah cerdas. Pastikan eksekusi MVP-nya cepat."
+                else:
+                    return f"Ide '{title}' cukup solid. Walaupun niche {niche} mungkin tidak viral, tapi kebutuhan pasarnya stabil. Fokus pada retensi user."
+            
+            if "harga" in q or "mahal" in q or "murah" in q:
+                if price > 50:
+                    return f"Harga ${price} termasuk premium untuk {niche}. Pastikan Anda memberikan value lebih, misalnya support prioritas atau fitur eksklusif."
+                else:
+                    return f"Harga ${price} cukup terjangkau. Strategi volume (banyak user) sangat penting di sini. Coba tawarkan upsell nanti."
+
+            if "kompetitor" in q or "saingan" in q:
+                return f"Di niche {niche}, kompetitor biasanya bermain di fitur umum. Keunggulan '{title}' ada pada spesialisasi untuk {niche}. Jangan takut head-to-head, tapi fokus pada diferensiasi."
+
+        # General topics
+        topics = {
+            "modal": [
+                "Untuk tahap awal, fokus pada MVP tanpa kode (No-Code) atau gunakan API murah. Estimasi modal awal bisa ditekan di bawah Rp 1 juta.",
+                "Jangan bakar uang di awal. Gunakan free tier dari Vercel/Supabase/OpenAI sebisa mungkin.",
+                "Modal terbesar adalah waktu Anda. Validasi dulu sebelum keluar uang sewa server mahal."
+            ],
+            "pemasaran": [
+                "Gunakan strategi 'Cold DM' di LinkedIn atau Instagram ke target niche spesifik.",
+                "Buat konten edukasi pendek di TikTok/Reels tentang masalah yang dihadapi niche tersebut.",
+                "Cari grup Facebook atau komunitas Discord tempat niche Anda berkumpul, lalu bantu jawab pertanyaan mereka (soft selling)."
+            ],
+            "validasi": [
+                "Jangan buat produk dulu! Buat landing page sederhana, sebar ke komunitas, dan lihat klik tombol 'Beli'.",
+                "Tanya ke 10 calon user: 'Apakah masalah ini cukup mengganggu sampai Anda mau bayar untuk solusinya?'",
+                "Pre-sale adalah validasi terbaik. Jika ada yang bayar sebelum produk jadi, itu emas."
+            ],
+            "harga": [
+                "Jangan jual terlalu murah. Niche market berani bayar mahal untuk solusi spesifik.",
+                "Mulai dari harga yang membuat Anda sedikit tidak nyaman (sedikit mahal), lalu berikan diskon untuk early adopter.",
+                "Gunakan tier pricing: Basic (murah), Pro (tengah), dan Enterprise (mahal) untuk anchoring effect."
+            ],
+            "teknis": [
+                "Gunakan stack yang Anda kuasai. Python/Flask sudah cukup. Jangan terjebak memilih teknologi canggih tapi tidak ada user.",
+                "Fokus ke fitur utama (Core Value). Fitur login sosial, dark mode, dll bisa ditunda.",
+                "Jangan over-engineering. Code yang tidak ditulis adalah code yang paling mudah dimaintain."
+            ],
+            "legal": [
+                "Di awal, jangan pusing soal PT/CV. Jalankan sebagai perseorangan dulu sampai revenue stabil.",
+                "Pastikan punya Terms of Service & Privacy Policy standar (bisa generate pakai AI).",
+                "Pisahkan rekening bisnis dan pribadi sejak hari pertama."
+            ],
+            "tim": [
+                "Sendiri (Solopreneur) lebih cepat untuk validasi. Cari co-founder jika skill Anda tidak menutup kebutuhan utama.",
+                "Outsource hal repetitif (desain logo, input data) jika ada budget kecil.",
+                "Jangan rekrut karyawan tetap sebelum Product-Market Fit."
+            ],
+            "gagal": [
+                "Gagal itu biasa. Pivot (ubah arah) adalah senjata startup.",
+                "Jika ide ini gagal, aset terbesar adalah audience/list email yang sudah Anda kumpulkan.",
+                "Fail fast. Jangan habiskan 6 bulan untuk ide yang tidak ada yang mau."
+            ]
+        }
+
+        # Check for keywords
+        for key, answers in topics.items():
+            if key in q or (key == "pemasaran" and ("marketing" in q or "promosi" in q)) or \
+               (key == "teknis" and ("coding" in q or "stack" in q)) or \
+               (key == "validasi" and ("ide" in q or "tes" in q)):
+                return self.rng.choice(answers)
+
+        # Default responses with variety
+        defaults = [
+            "Pertanyaan menarik. Fokus utama Anda saat ini seharusnya adalah: Validasi -> Distribusi -> Produk. Apakah Anda sudah memvalidasi ide ke calon user?",
+            "Coba pikirkan: Apa satu hal yang bisa Anda lakukan HARI INI untuk mendapatkan user pertama?",
+            "Saran saya: Jangan terlalu lama berpikir (analysis paralysis). Lakukan tindakan kecil yang nyata sekarang.",
+            "Bisa diperjelas? Apakah ini soal strategi bisnis atau masalah teknis?",
+            "Intinya adalah execution. Ide itu murah, eksekusi itu mahal. Apa langkah konkret Anda selanjutnya?"
+        ]
+        return self.rng.choice(defaults)
 
 
 
