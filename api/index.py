@@ -346,6 +346,8 @@ HTML_TEMPLATE = """
             right: 30px;
             width: 350px;
             height: 500px;
+            max-width: calc(100% - 60px);
+            max-height: 60vh;
             background: #111725;
             border: 1px solid var(--glass-border);
             border-radius: 20px;
@@ -355,6 +357,21 @@ HTML_TEMPLATE = """
             z-index: 2000;
             overflow: hidden;
             animation: slideUp 0.3s ease-out;
+        }
+
+        @media (max-width: 600px) {
+            .chat-window {
+                right: 20px;
+                bottom: 90px;
+                width: calc(100% - 40px);
+            }
+            
+            .modal-content {
+                width: 95%;
+                padding: 20px;
+            }
+            
+            h1 { font-size: 2.5rem; }
         }
 
         .chat-header {
@@ -468,6 +485,12 @@ HTML_TEMPLATE = """
                 document.getElementById('m-rev').innerHTML = data.plan.revenue_projection.map(r => 
                     `<tr><td>${r.users} User</td><td class="money">${r.revenue_fmt}</td></tr>`
                 ).join('');
+
+                // Update share links
+                const text = encodeURIComponent(`Cek ide bisnis gila ini: ${data.title} - ${data.description}`);
+                const url = encodeURIComponent(window.location.href);
+                document.getElementById('share-twitter').href = `https://twitter.com/intent/tweet?text=${text}&url=${url}`;
+                document.getElementById('share-wa').href = `https://wa.me/?text=${text} ${url}`;
 
                 const modal = document.getElementById('modal');
                 modal.style.display = 'flex';
@@ -632,6 +655,11 @@ HTML_TEMPLATE = """
             <div style="background: rgba(255,255,255,0.03); padding: 16px; border-radius: 8px; line-height: 1.6; color: #ccc;">
                 <p style="margin-bottom: 10px"><strong style="color: #fff">Go-to-Market:</strong> <span id="m-strategy"></span></p>
                 <p style="margin: 0"><strong style="color: #fff">Celah Kompetitor:</strong> <span id="m-comp"></span></p>
+            </div>
+
+            <div style="margin-top: 24px; display: flex; gap: 12px;">
+                <a id="share-twitter" target="_blank" style="flex: 1; text-align: center; background: #1da1f2; color: white; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: bold;">Share Twitter</a>
+                <a id="share-wa" target="_blank" style="flex: 1; text-align: center; background: #25d366; color: white; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: bold;">Share WA</a>
             </div>
         </div>
     </div>
