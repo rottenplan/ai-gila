@@ -15,143 +15,445 @@ HTML_TEMPLATE = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI GILA - Generator Ide Bisnis</title>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Space Grotesk', sans-serif; background: #0b0f19; color: #e6e6e6; margin: 0; padding: 20px; }
-        .container { max-width: 800px; margin: 0 auto; }
-        h1 { font-size: 2.5rem; background: linear-gradient(90deg, #4f8cff, #a0d2eb); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 10px; }
-        .subtitle { color: #8899ac; margin-bottom: 30px; }
-        .btn { background: #4f8cff; color: white; border: none; padding: 12px 24px; font-size: 1.1rem; border-radius: 8px; cursor: pointer; font-family: inherit; font-weight: bold; transition: all 0.2s; }
-        .btn:hover { background: #3a7be0; transform: translateY(-2px); }
-        .ideas-list { margin-top: 40px; }
-        .idea-card { background: #111725; border: 1px solid #1f2738; padding: 20px; margin-bottom: 16px; border-radius: 12px; position: relative; overflow: hidden; transition: transform 0.2s; }
-        .idea-card:hover { transform: translateY(-2px); border-color: #3a7be0; }
-        .idea-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #2d3748; }
-        .idea-card.hot::before { background: #ff4f4f; }
-        .idea-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px; }
-        .idea-title { font-size: 1.25rem; font-weight: bold; margin: 0; }
-        .idea-score { font-size: 0.9rem; color: #4f8cff; background: rgba(79, 140, 255, 0.1); padding: 4px 8px; border-radius: 4px; }
-        .idea-desc { color: #cbd5e0; line-height: 1.5; }
-        .meta { display: flex; gap: 12px; margin-top: 12px; font-size: 0.85rem; color: #8899ac; align-items: center; }
-        .tag { background: #1a202c; padding: 4px 8px; border-radius: 4px; }
-        .hot-badge { background: #ff4f4f; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; vertical-align: middle; margin-left: 8px; }
+        :root {
+            --bg-dark: #050505;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --accent-primary: #00f2ff;
+            --accent-secondary: #bd00ff;
+            --text-main: #ffffff;
+            --text-muted: #8899ac;
+        }
         
-        .btn-analyze { background: transparent; border: 1px solid #4f8cff; color: #4f8cff; padding: 4px 12px; font-size: 0.8rem; border-radius: 4px; cursor: pointer; margin-left: auto; text-decoration: none; }
-        .btn-analyze:hover { background: rgba(79, 140, 255, 0.1); }
+        * { box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(189, 0, 255, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(0, 242, 255, 0.15) 0%, transparent 40%);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
 
-        /* Modal Styles */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; }
-        .modal-overlay.active { display: flex; }
-        .modal-content { background: #111725; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; border-radius: 12px; border: 1px solid #2d3748; padding: 24px; position: relative; }
-        .close-btn { position: absolute; top: 16px; right: 16px; background: none; border: none; color: #8899ac; font-size: 1.5rem; cursor: pointer; }
-        .section-title { color: #4f8cff; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; margin-top: 24px; margin-bottom: 12px; font-weight: bold; border-bottom: 1px solid #1f2738; padding-bottom: 8px; }
-        .feature-list, .hook-list { list-style: none; padding: 0; margin: 0; }
-        .feature-list li { margin-bottom: 8px; padding-left: 20px; position: relative; }
-        .feature-list li::before { content: '✓'; color: #48bb78; position: absolute; left: 0; }
-        .hook-list li { margin-bottom: 8px; font-style: italic; color: #a0aec0; border-left: 3px solid #4a5568; padding-left: 12px; }
-        .rev-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-        .rev-table th { text-align: left; color: #8899ac; font-weight: normal; padding-bottom: 8px; border-bottom: 1px solid #2d3748; }
-        .rev-table td { padding: 8px 0; border-bottom: 1px solid #1f2738; }
-        .rev-val { color: #48bb78; font-family: monospace; font-size: 1.1rem; }
-        footer { margin-top: 60px; text-align: center; color: #4a5568; font-size: 0.9rem; }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 3.5rem;
+            margin: 0 0 16px;
+            background: linear-gradient(135deg, #fff 30%, var(--accent-primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -1px;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Generator Button */
+        .action-area {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 50px;
+        }
+
+        .btn-generate {
+            position: relative;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            color: #fff;
+            border: none;
+            padding: 16px 40px;
+            font-size: 1.2rem;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.3);
+            overflow: hidden;
+        }
+
+        .btn-generate::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: 0.5s;
+        }
+
+        .btn-generate:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 40px rgba(189, 0, 255, 0.5);
+        }
+
+        .btn-generate:hover::before {
+            left: 100%;
+        }
+
+        /* Cards */
+        .ideas-grid {
+            display: grid;
+            gap: 24px;
+        }
+
+        .idea-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s ease;
+            animation: slideUp 0.5s ease-out forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .idea-card:nth-child(1) { animation-delay: 0.1s; }
+        .idea-card:nth-child(2) { animation-delay: 0.2s; }
+        .idea-card:nth-child(3) { animation-delay: 0.3s; }
+        .idea-card:nth-child(4) { animation-delay: 0.4s; }
+        .idea-card:nth-child(5) { animation-delay: 0.5s; }
+
+        .idea-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.05);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .idea-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin: 0;
+            color: #fff;
+        }
+
+        .score-badge {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.9rem;
+            background: rgba(0, 242, 255, 0.1);
+            color: var(--accent-primary);
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(0, 242, 255, 0.2);
+        }
+
+        .idea-desc {
+            color: #a0a0a0;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .card-stats {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255,255,255,0.05);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: #ccc;
+        }
+
+        .stat-icon { opacity: 0.7; }
+
+        .btn-analyze {
+            width: 100%;
+            background: transparent;
+            border: 1px solid var(--glass-border);
+            color: #fff;
+            padding: 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-analyze:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: #fff;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: #0f1218;
+            border: 1px solid var(--glass-border);
+            width: 90%;
+            max-width: 650px;
+            max-height: 90vh;
+            border-radius: 20px;
+            padding: 30px;
+            overflow-y: auto;
+            position: relative;
+            transform: scale(0.9);
+            transition: transform 0.3s;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: #666;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .close-btn:hover { color: #fff; }
+
+        .modal-header { margin-bottom: 24px; border-bottom: 1px solid var(--glass-border); padding-bottom: 20px; }
+        .modal-title { font-family: 'Space Grotesk'; font-size: 1.8rem; margin: 0 0 8px; }
+        
+        .section-header {
+            color: var(--accent-primary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-top: 24px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .feature-item {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+            background: rgba(255,255,255,0.03);
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .check-icon { color: var(--accent-secondary); }
+
+        .hook-box {
+            background: linear-gradient(90deg, rgba(189,0,255,0.1), transparent);
+            border-left: 3px solid var(--accent-secondary);
+            padding: 12px;
+            margin-bottom: 10px;
+            font-style: italic;
+            color: #ddd;
+        }
+
+        table { width: 100%; border-collapse: collapse; }
+        td, th { padding: 12px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        th { color: var(--text-muted); font-weight: 500; font-size: 0.9rem; }
+        .money { font-family: 'Space Grotesk'; color: #48bb78; font-weight: 700; }
+
+        /* Animations */
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Trending Badge */
+        .trending {
+            background: linear-gradient(45deg, #ff4d4d, #f9cb28);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: bold;
+            font-size: 0.8rem;
+            margin-left: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
     </style>
     <script>
         async function analyzeIdea(ideaId) {
             const btn = document.getElementById(`btn-${ideaId}`);
-            btn.innerText = "Menganalisis...";
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `<span style="animation: spin 1s linear infinite">↻</span> Menganalisis...`;
+            
             try {
                 const res = await fetch(`/analyze/${ideaId}`);
                 const data = await res.json();
                 
-                // Populate Modal
                 document.getElementById('m-title').innerText = data.title;
                 document.getElementById('m-desc').innerText = data.description;
                 document.getElementById('m-strategy').innerText = data.plan.strategy;
                 document.getElementById('m-comp').innerText = data.plan.competitor_sim;
                 
-                const featList = document.getElementById('m-features');
-                featList.innerHTML = data.plan.mvp_features.map(f => `<li>${f}</li>`).join('');
+                document.getElementById('m-features').innerHTML = data.plan.mvp_features.map(f => 
+                    `<div class="feature-item"><span class="check-icon">✓</span> <span>${f}</span></div>`
+                ).join('');
                 
-                const hookList = document.getElementById('m-hooks');
-                hookList.innerHTML = data.plan.marketing_hooks.map(h => `<li>"${h}"</li>`).join('');
+                document.getElementById('m-hooks').innerHTML = data.plan.marketing_hooks.map(h => 
+                    `<div class="hook-box">"${h}"</div>`
+                ).join('');
                 
-                const revList = document.getElementById('m-rev');
-                revList.innerHTML = data.plan.revenue_projection.map(r => 
-                    `<tr><td>${r.users} User</td><td class="rev-val">${r.revenue_fmt} / bln</td></tr>`
+                document.getElementById('m-rev').innerHTML = data.plan.revenue_projection.map(r => 
+                    `<tr><td>${r.users} User</td><td class="money">${r.revenue_fmt}</td></tr>`
                 ).join('');
 
-                document.getElementById('modal').classList.add('active');
+                const modal = document.getElementById('modal');
+                modal.style.display = 'flex';
+                // Trigger reflow
+                modal.offsetHeight; 
+                modal.classList.add('active');
             } catch (e) {
-                alert("Gagal menganalisis. Coba lagi.");
+                alert("Gagal memuat data. Silakan coba lagi.");
             } finally {
-                btn.innerText = "Bedah Bisnis ➜";
+                btn.innerHTML = originalText;
             }
         }
         
         function closeModal() {
-            document.getElementById('modal').classList.remove('active');
+            const modal = document.getElementById('modal');
+            modal.classList.remove('active');
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
         }
     </script>
 </head>
 <body>
     <div class="container">
-        <h1>AI GILA GENERATOR</h1>
-        <p class="subtitle">Software penghasil ide bisnis micro-SaaS yang "tidak terpikirkan" & berkembang sendiri.</p>
+        <header>
+            <h1>AI GILA GENERATOR</h1>
+            <p class="subtitle">Mesin penghasil ide bisnis micro-SaaS yang "tidak terpikirkan" manusia. Biarkan AI merancang jalan menuju kebebasan finansial Anda.</p>
+        </header>
         
-        <form action="/" method="post">
-            <button type="submit" class="btn">⚡ Generate Ide Baru</button>
+        <form action="/" method="post" class="action-area">
+            <button type="submit" class="btn-generate">
+                ✨ Generate Ide Baru
+            </button>
         </form>
 
         {% if ideas %}
-        <div class="ideas-list">
-            <h2 style="font-size: 1.5rem; margin-bottom: 20px;">Hasil Analisis Pasar Terkini</h2>
+        <div class="ideas-grid">
             {% for idea, score in ideas %}
-            <div class="idea-card {% if idea.trend_score > 0.7 %}hot{% endif %}">
-                <div class="idea-header">
+            <div class="idea-card">
+                <div class="card-top">
                     <h3 class="idea-title">
                         {{ idea.title }}
-                        {% if idea.trend_score > 0.7 %}<span class="hot-badge">TRENDING</span>{% endif %}
+                        {% if idea.trend_score > 0.7 %}
+                        <span class="trending">🔥 Trending</span>
+                        {% endif %}
                     </h3>
-                    <span class="idea-score">Score: {{ "%.4f"|format(score) }}</span>
+                    <span class="score-badge">{{ "%.1f"|format(score * 10) }}/10</span>
                 </div>
+                
                 <p class="idea-desc">{{ idea.description }}</p>
-                <div class="meta">
-                    <span class="tag">{{ idea.model|title }}</span>
-                    <span class="tag">Rp{{ "{:,}".format((idea.price * 15000)|int) }}</span>
-                    <button id="btn-{{ idea.id }}" class="btn-analyze" onclick="analyzeIdea('{{ idea.id }}')">Bedah Bisnis ➜</button>
+                
+                <div class="card-stats">
+                    <div class="stat-pill">
+                        <span class="stat-icon">📦</span> {{ idea.model|title }}
+                    </div>
+                    <div class="stat-pill">
+                        <span class="stat-icon">💰</span> Rp{{ "{:,}".format((idea.price * 15000)|int) }}
+                    </div>
+                    <div class="stat-pill">
+                        <span class="stat-icon">👥</span> ~{{ "{:,}".format(idea.audience) }} Target
+                    </div>
                 </div>
+
+                <button id="btn-{{ idea.id }}" class="btn-analyze" onclick="analyzeIdea('{{ idea.id }}')">
+                    🔍 Bedah Bisnis & Potensi Cuan
+                </button>
             </div>
             {% endfor %}
         </div>
         {% endif %}
-
-        <footer>
-            <p>Ditenagai oleh AI Gila Engine v2.0 • Berjalan di Vercel</p>
-        </footer>
     </div>
 
-    <!-- Modal Analysis -->
+    <!-- Modal -->
     <div id="modal" class="modal-overlay" onclick="if(event.target === this) closeModal()">
         <div class="modal-content">
             <button class="close-btn" onclick="closeModal()">×</button>
-            <h2 id="m-title" style="margin-top:0">Judul Ide</h2>
-            <p id="m-desc" style="color:#a0aec0; margin-bottom:24px">Deskripsi singkat ide...</p>
             
-            <div class="section-title">✨ Fitur MVP Wajib</div>
-            <ul id="m-features" class="feature-list"></ul>
-            
-            <div class="section-title">📢 Viral Hooks (Marketing)</div>
-            <ul id="m-hooks" class="hook-list"></ul>
-            
-            <div class="section-title">💰 Potensi Cuan (Estimasi)</div>
-            <table class="rev-table">
-                <thead><tr><th>Milestone</th><th>Pendapatan Bulanan</th></tr></thead>
+            <div class="modal-header">
+                <h2 id="m-title" class="modal-title">Title</h2>
+                <p id="m-desc" style="color: #8899ac; margin:0">Description</p>
+            </div>
+
+            <div class="section-header">✨ Fitur MVP Wajib</div>
+            <div id="m-features"></div>
+
+            <div class="section-header">📢 Marketing Hooks</div>
+            <div id="m-hooks"></div>
+
+            <div class="section-header">💰 Proyeksi Pendapatan</div>
+            <table>
+                <thead><tr><th>Milestone Pengguna</th><th>Estimasi / Bulan</th></tr></thead>
                 <tbody id="m-rev"></tbody>
             </table>
-            
-            <div class="section-title">⚔️ Strategi & Kompetisi</div>
-            <p style="font-size:0.9rem; color:#cbd5e0; margin-bottom:8px"><strong>Strategi:</strong> <span id="m-strategy"></span></p>
-            <p style="font-size:0.9rem; color:#cbd5e0"><strong>Situasi Pasar:</strong> <span id="m-comp"></span></p>
+
+            <div class="section-header">⚔️ Strategi Eksekusi</div>
+            <div style="background: rgba(255,255,255,0.03); padding: 16px; border-radius: 8px; line-height: 1.6; color: #ccc;">
+                <p style="margin-bottom: 10px"><strong style="color: #fff">Go-to-Market:</strong> <span id="m-strategy"></span></p>
+                <p style="margin: 0"><strong style="color: #fff">Celah Kompetitor:</strong> <span id="m-comp"></span></p>
+            </div>
         </div>
     </div>
 </body>
