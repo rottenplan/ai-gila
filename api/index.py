@@ -525,13 +525,32 @@ HTML_TEMPLATE = """
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script>
-        async function analyzeIdea(ideaId) {
-            const btn = document.getElementById(`btn-${ideaId}`);
+        async function analyzeIdea(btn) {
+            // Get idea data from the parent card
+            const card = btn.closest('.idea-card');
+            let ideaData;
+            try {
+                // Handle potential string vs object issues in dataset
+                const raw = card.dataset.idea;
+                // If it's already an object (rare in dataset), use it, otherwise parse
+                ideaData = typeof raw === 'string' ? JSON.parse(raw) : raw;
+            } catch (e) {
+                alert("Error data idea");
+                return;
+            }
+
             const originalText = btn.innerHTML;
             btn.innerHTML = `<span style="animation: spin 1s linear infinite">↻</span> Menganalisis...`;
             
             try {
-                const res = await fetch(`/analyze/${ideaId}`);
+                const res = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(ideaData)
+                });
+                
+                if (!res.ok) throw new Error("Gagal analisis");
+                
                 const data = await res.json();
                 
                 document.getElementById('m-title').innerText = data.title;
@@ -570,12 +589,44 @@ HTML_TEMPLATE = """
                     html2pdf().set(opt).from(element).save();
                 };
 
+                // Export Landing Page Handler
+                document.getElementById('btn-landing').onclick = async () => {
+                    const btnLand = document.getElementById('btn-landing');
+                    const oldText = btnLand.innerHTML;
+                    btnLand.innerHTML = "Generating...";
+                    
+                    try {
+                        const res = await fetch('/generate-landing', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify(data) // Send full idea data
+                        });
+                        const json = await res.json();
+                        if (json.error) throw new Error(json.error);
+                        
+                        // Create blob and download
+                        const blob = new Blob([json.html], {type: 'text/html'});
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `landing-page-${data.id}.html`;
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+                    } catch(e) {
+                        alert("Gagal generate landing page: " + e.message);
+                    } finally {
+                        btnLand.innerHTML = oldText;
+                    }
+                };
+
                 const modal = document.getElementById('modal');
                 modal.style.display = 'flex';
                 // Trigger reflow
                 modal.offsetHeight; 
                 modal.classList.add('active');
             } catch (e) {
+                console.error(e);
                 alert("Gagal memuat data. Silakan coba lagi.");
             } finally {
                 btn.innerHTML = originalText;
@@ -735,7 +786,7 @@ HTML_TEMPLATE = """
                         <div class="stat-pill"><span class="stat-icon">💰</span> Rp${price}</div>
                         <div class="stat-pill"><span class="stat-icon">👥</span> ~${audience} Target</div>
                     </div>
-                    <button id="btn-${i.id}" class="btn-analyze" onclick="analyzeIdea('${i.id}')">
+                    <button id="btn-${i.id}" class="btn-analyze" onclick="analyzeIdea(this)">
                         🔍 Bedah Bisnis & Potensi Cuan
                     </button>
                 </div>`;
@@ -811,7 +862,7 @@ HTML_TEMPLATE = """
                         </div>
                     </div>
 
-                    <button id="btn-{{ idea.id }}" class="btn-analyze" onclick="analyzeIdea('{{ idea.id }}')">
+                    <button id="btn-{{ idea.id }}" class="btn-analyze" onclick="analyzeIdea(this)">
                         🔍 Bedah Bisnis & Potensi Cuan
                     </button>
                 </div>
@@ -878,6 +929,7 @@ HTML_TEMPLATE = """
                 <a id="share-twitter" target="_blank" style="flex: 1; text-align: center; background: #1da1f2; color: white; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: bold; cursor: pointer;">Share Twitter</a>
                 <a id="share-wa" target="_blank" style="flex: 1; text-align: center; background: #25d366; color: white; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: bold; cursor: pointer;">Share WA</a>
                 <button id="btn-pdf" style="flex: 1; background: #ff4757; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer;">Download PDF</button>
+                <button id="btn-landing" style="flex: 1; background: #5a4fcf; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer;">Export Web</button>
             </div>
         </div>
     </div>
@@ -904,19 +956,31 @@ def index():
     
     return render_template_string(HTML_TEMPLATE, ideas=ideas_data)
 
-@app.route('/analyze/<idea_id>')
-def analyze(idea_id):
-    idea = IDEA_CACHE.get(idea_id)
-    if not idea:
-        return jsonify({"error": "Idea not found"}), 404
-    
-    plan = eng.generate_business_plan(idea)
-    return jsonify({
-        "id": idea.id,
-        "title": idea.title,
-        "description": idea.description,
-        "plan": plan
-    })
+@app.route('/analyze', methods=['POST'])
+def analyze():
+    data = request.get_json()
+    try:
+        from ai_gila.engine import Idea
+        # Reconstruct idea
+        idea = Idea(
+            id=data.get('id'),
+            title=data.get('title'),
+            description=data.get('description'),
+            niche=data.get('niche'),
+            model=data.get('model'),
+            price=float(data.get('price')),
+            audience=int(data.get('audience')),
+            trend_score=float(data.get('trend_score', 0.5))
+        )
+        
+        plan = eng.generate_business_plan(idea)
+        
+        # Return everything needed for frontend
+        response = asdict(idea)
+        response['plan'] = plan
+        return jsonify(response)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
 
 @app.route('/consult', methods=['POST'])
 def consult():
@@ -924,6 +988,30 @@ def consult():
     q = data.get('question', '')
     answer = eng.consult(q)
     return jsonify({"answer": answer})
+
+@app.route('/generate-landing', methods=['POST'])
+def generate_landing():
+    data = request.get_json()
+    # Reconstruct Idea object from JSON data
+    try:
+        # We need to ensure we have all fields. If not, use defaults or fail.
+        # The client sends what's in 'idea' object.
+        # Idea class: id, title, description, niche, model, price, audience, trend_score
+        from ai_gila.engine import Idea
+        idea = Idea(
+            id=data.get('id', 'unknown'),
+            title=data.get('title', 'Untitled'),
+            description=data.get('description', ''),
+            niche=data.get('niche', 'General'),
+            model=data.get('model', 'SaaS'),
+            price=float(data.get('price', 10)),
+            audience=int(data.get('audience', 1000)),
+            trend_score=float(data.get('trend_score', 0.5))
+        )
+        html = eng.generate_landing_page_html(idea)
+        return jsonify({"html": html})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
 
 
 

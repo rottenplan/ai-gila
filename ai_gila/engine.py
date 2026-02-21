@@ -214,9 +214,132 @@ class Engine:
             self.weights["price_fit"] = min(self.weights["price_fit"] + 0.03, 0.4)
         self._save_state()
 
+    def generate_landing_page_html(self, idea: Idea) -> str:
+        """Generates a complete single-file HTML landing page for the idea."""
+        # Get richer data
+        plan = self.generate_business_plan(idea)
+        
+        # Color palette generation based on niche hash
+        h = hash(idea.niche)
+        hue = h % 360
+        primary_color = f"hsl({hue}, 70%, 50%)"
+        secondary_color = f"hsl({(hue + 40) % 360}, 80%, 60%)"
+        
+        features_html = ""
+        for f in plan['mvp_features']:
+            features_html += f"""
+            <div class="feature-card">
+                <div class="icon">✨</div>
+                <h3>{f}</h3>
+                <p>Fitur andalan untuk {idea.niche}.</p>
+            </div>"""
+            
+        hooks_html = ""
+        for h in plan['marketing_hooks']:
+             hooks_html += f"<li>✅ {h}</li>"
+
+        return f"""<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{idea.title} - Early Access</title>
+    <style>
+        :root {{
+            --primary: {primary_color};
+            --secondary: {secondary_color};
+            --bg: #0f172a;
+            --text: #f8fafc;
+            --card-bg: #1e293b;
+        }}
+        body {{
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            line-height: 1.6;
+        }}
+        .container {{ max-width: 1000px; margin: 0 auto; padding: 20px; }}
+        header {{ display: flex; justify-content: space-between; align-items: center; padding: 20px 0; }}
+        .logo {{ font-weight: 800; font-size: 1.5rem; background: linear-gradient(to right, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }}
+        
+        .hero {{ text-align: center; padding: 80px 20px; }}
+        h1 {{ font-size: 3.5rem; line-height: 1.2; margin-bottom: 20px; background: linear-gradient(to right, #fff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }}
+        .subtitle {{ font-size: 1.25rem; color: #94a3b8; max-width: 600px; margin: 0 auto 40px; }}
+        
+        .btn {{ display: inline-block; background: var(--primary); color: white; padding: 16px 32px; border-radius: 50px; text-decoration: none; font-weight: bold; font-size: 1.1rem; transition: transform 0.2s; border: none; cursor: pointer; }}
+        .btn:hover {{ transform: translateY(-2px); box-shadow: 0 10px 20px -10px var(--primary); }}
+        
+        .features {{ padding: 80px 20px; background: #0b1120; }}
+        .grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; }}
+        .feature-card {{ background: var(--card-bg); padding: 30px; border-radius: 16px; border: 1px solid #334155; }}
+        .icon {{ font-size: 2rem; margin-bottom: 16px; }}
+        
+        .pricing {{ text-align: center; padding: 80px 20px; }}
+        .price-card {{ background: linear-gradient(145deg, var(--card-bg), #0f172a); border: 1px solid var(--primary); padding: 40px; border-radius: 20px; max-width: 400px; margin: 0 auto; }}
+        .price {{ font-size: 3rem; font-weight: 800; color: var(--primary); }}
+        .period {{ color: #94a3b8; font-size: 1rem; }}
+        .benefits {{ list-style: none; padding: 0; text-align: left; margin: 30px 0; }}
+        .benefits li {{ margin-bottom: 12px; font-size: 1.1rem; }}
+        
+        footer {{ text-align: center; padding: 40px; color: #64748b; border-top: 1px solid #1e293b; }}
+        
+        @media (max-width: 768px) {{
+            h1 {{ font-size: 2.5rem; }}
+        }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">{idea.title}</div>
+            <nav>
+                <a href="#features" style="color: #fff; text-decoration: none; margin-right: 20px">Fitur</a>
+                <a href="#pricing" style="color: #fff; text-decoration: none">Harga</a>
+            </nav>
+        </header>
+        
+        <section class="hero">
+            <h1>{idea.title}</h1>
+            <p class="subtitle">{idea.description}</p>
+            <a href="#pricing" class="btn">Mulai Sekarang 🚀</a>
+            <p style="margin-top: 20px; font-size: 0.9rem; color: #64748b">Tanpa kartu kredit • Batalkan kapan saja</p>
+        </section>
+    </div>
+    
+    <section id="features" class="features">
+        <div class="container">
+            <h2 style="text-align: center; font-size: 2.5rem; margin-bottom: 50px">Solusi Cerdas untuk {idea.niche.title()}</h2>
+            <div class="grid">
+                {features_html}
+            </div>
+        </div>
+    </section>
+    
+    <section id="pricing" class="pricing">
+        <div class="container">
+            <div class="price-card">
+                <h3>Early Bird Offer</h3>
+                <div class="price">Rp{int(idea.price * 15000):,}<span class="period">/{'bulan' if idea.model in ['langganan', 'saas'] else 'lifetime'}</span></div>
+                <ul class="benefits">
+                    {hooks_html}
+                    <li>🔒 Jaminan Uang Kembali 30 Hari</li>
+                    <li>📞 Support Prioritas 24/7</li>
+                </ul>
+                <button class="btn" style="width: 100%" onclick="alert('Terima kasih atas minat Anda! Kami sedang dalam tahap pengembangan.')">Ambil Promo Ini</button>
+            </div>
+        </div>
+    </section>
+    
+    <footer>
+        <p>&copy; 2024 {idea.title}. Generated by AI Gila.</p>
+    </footer>
+</body>
+</html>"""
+
     def export_landing_page(self, idea: Idea, out_dir: Path, variant: str = "control") -> Path:
         out_dir.mkdir(parents=True, exist_ok=True)
-        html = self._landing_template(idea, variant)
+        html = self.generate_landing_page_html(idea)
         p = out_dir / f"{idea.id}_{variant}.html"
         with open(p, "w", encoding="utf-8") as f:
             f.write(html)
@@ -282,75 +405,5 @@ class Engine:
         else:
             return "Pertanyaan menarik. Fokus utama Anda saat ini seharusnya adalah: Validasi -> Distribusi -> Produk. Apakah Anda sudah memvalidasi ide ke calon user?"
 
-    def _landing_template(self, idea: Idea, variant: str) -> str:
-        # Variant logic
-        cta_text = "Dapatkan Akses Awal"
-        headline_prefix = ""
-        bg_color = "#0b0f19"
-        
-        if variant == "urgent":
-            cta_text = "Amankan Slot Terbatas"
-            headline_prefix = "<span style='color:#ff4f4f;font-size:0.6em;display:block;text-transform:uppercase;letter-spacing:1px'>Segera Hadir</span>"
-        elif variant == "minimal":
-            bg_color = "#ffffff"
-            text_color = "#111"
-        
-        # Base styles
-        is_light = variant == "minimal"
-        body_bg = bg_color
-        body_col = "#111" if is_light else "#e6e6e6"
-        card_bg = "#f5f5f5" if is_light else "#111725"
-        card_border = "#e0e0e0" if is_light else "#1f2738"
-        lead_col = "#666" if is_light else "#bdbdbd"
 
-        return f"""<!doctype html>
-<html lang="id">
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{idea.title}</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-<style>
-body{{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:0;padding:0;background:{body_bg};color:{body_col}}}
-.wrap{{max-width:880px;margin:0 auto;padding:48px 24px}}
-.hero{{padding:24px 0 8px}}
-h1{{font-size:40px;line-height:1.1;margin:0 0 12px}}
-p.lead{{font-size:18px;color:{lead_col};margin:0 0 16px}}
-.card{{background:{card_bg};border:1px solid {card_border};border-radius:12px;padding:20px;margin:20px 0}}
-.cta{{display:inline-block;background:#4f8cff;border:none;border-radius:8px;padding:14px 18px;color:#fff;font-weight:700;text-decoration:none;cursor:pointer}}
-.cta:hover{{background:#3a7be0}}
-.grid{{display:grid;grid-template-columns:1fr 1fr;gap:16px}}
-.muted{{color:#9aa4b2}}
-.badge{{display:inline-block;padding:4px 8px;border-radius:4px;background:#2d3748;font-size:12px;color:#cbd5e0;margin-bottom:8px}}
-</style>
-<div class="wrap">
-  <div class="hero">
-    <div class="badge">{variant.upper()} VARIANT</div>
-    {headline_prefix}
-    <h1>{idea.title}</h1>
-    <p class="lead">{idea.description}</p>
-    <a href="#" class="cta">{cta_text}</a>
-  </div>
-  
-  <div class="grid">
-    <div class="card">
-        <h3>Model Bisnis</h3>
-        <p>{idea.model.title()}</p>
-    </div>
-    <div class="card">
-        <h3>Estimasi Harga</h3>
-        <p>Rp{int(idea.price * 15000):,}</p>
-    </div>
-  </div>
-
-  <div class="card">
-    <h3>Mengapa ini dibutuhkan?</h3>
-    <p>Target pasar <strong>{idea.niche}</strong> berjumlah sekitar {idea.audience:,} orang yang potensial membutuhkan solusi ini.</p>
-  </div>
-  
-  <footer style="margin-top:48px;border-top:1px solid {card_border};padding-top:24px;color:{lead_col};font-size:14px">
-    &copy; 2024 AI Gila Generator. Konsep ID: {idea.id}
-  </footer>
-</div>
-</html>"""
 
