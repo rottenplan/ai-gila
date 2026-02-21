@@ -381,13 +381,76 @@ class Engine:
             rev = u * price_idr
             revenue_proj.append({"users": u, "revenue": rev, "revenue_fmt": f"Rp{rev:,}"})
             
+        
+        # SWOT Analysis
+        swot = self.generate_swot(idea)
+        
+        # Logo
+        logo_svg = self.generate_logo_svg(idea)
+
         return {
             "mvp_features": mvp_features,
             "marketing_hooks": hooks,
             "revenue_projection": revenue_proj,
             "strategy": f"Fokus pada komunitas {idea.niche} di Facebook/LinkedIn. Tawarkan trial gratis untuk 10 user pertama sebagai validasi.",
-            "competitor_sim": "Market leader saat ini generik & mahal. Peluang masuk lewat harga terjangkau & fitur spesifik."
+            "competitor_sim": "Market leader saat ini generik & mahal. Peluang masuk lewat harga terjangkau & fitur spesifik.",
+            "swot": swot,
+            "logo_svg": logo_svg
         }
+    
+    def generate_swot(self, idea: Idea) -> Dict:
+        """Generates SWOT analysis."""
+        return {
+            "strengths": [
+                f"Fokus spesifik pada niche {idea.niche}",
+                "Biaya operasional rendah dengan AI",
+                f"Model bisnis {idea.model} yang fleksibel"
+            ],
+            "weaknesses": [
+                "Brand awareness masih nol",
+                "Ketergantungan pada API pihak ketiga",
+                "Tim kecil (solopreneur)"
+            ],
+            "opportunities": [
+                f"Ekspansi ke niche sejenis selain {idea.niche}",
+                "Integrasi dengan tools populer",
+                "Partnership dengan influencer lokal"
+            ],
+            "threats": [
+                "Pemain besar merilis fitur serupa",
+                "Perubahan regulasi AI",
+                "Perang harga dengan kompetitor baru"
+            ]
+        }
+
+    def generate_logo_svg(self, idea: Idea) -> str:
+        """Generates a deterministic geometric SVG logo."""
+        h = hash(idea.title)
+        hue1 = h % 360
+        hue2 = (hue1 + 40) % 360
+        
+        # Simple geometric shapes
+        shapes = [
+            f'<circle cx="50" cy="50" r="40" fill="hsl({hue1}, 70%, 50%)" opacity="0.8" />',
+            f'<rect x="20" y="20" width="60" height="60" rx="10" fill="hsl({hue1}, 70%, 50%)" opacity="0.8" />',
+            f'<polygon points="50,10 90,90 10,90" fill="hsl({hue1}, 70%, 50%)" opacity="0.8" />'
+        ]
+        shape_idx = abs(h) % len(shapes)
+        base_shape = shapes[shape_idx]
+        
+        # Overlay element
+        overlay = f'<text x="50" y="65" font-family="Arial" font-weight="bold" font-size="40" text-anchor="middle" fill="white">{idea.title[0]}</text>'
+        
+        return f"""<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="grad{h}" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:hsl({hue1}, 70%, 50%);stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:hsl({hue2}, 70%, 50%);stop-opacity:1" />
+                </linearGradient>
+            </defs>
+            {base_shape.replace(f'fill="hsl({hue1}, 70%, 50%)"', f'fill="url(#grad{h})"') }
+            {overlay}
+        </svg>"""
 
     def consult(self, question: str) -> str:
         """Simple rule-based consultant for business questions."""

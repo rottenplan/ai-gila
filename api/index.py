@@ -553,11 +553,34 @@ HTML_TEMPLATE = """
                 
                 const data = await res.json();
                 
+                document.getElementById('m-logo').innerHTML = data.plan.logo_svg;
                 document.getElementById('m-title').innerText = data.title;
                 document.getElementById('m-desc').innerText = data.description;
                 document.getElementById('m-strategy').innerText = data.plan.strategy;
                 document.getElementById('m-comp').innerText = data.plan.competitor_sim;
                 
+                // Render SWOT
+                const swot = data.plan.swot;
+                const swotHtml = `
+                    <div style="background: rgba(72, 187, 120, 0.1); border: 1px solid rgba(72, 187, 120, 0.3); padding: 12px; border-radius: 8px;">
+                        <strong style="color: #48bb78; display:block; margin-bottom:8px">STRENGTHS</strong>
+                        <ul style="margin:0; padding-left:20px; color:#ccc; font-size:0.9em">${swot.strengths.map(s => `<li>${s}</li>`).join('')}</ul>
+                    </div>
+                    <div style="background: rgba(237, 137, 54, 0.1); border: 1px solid rgba(237, 137, 54, 0.3); padding: 12px; border-radius: 8px;">
+                        <strong style="color: #ed8936; display:block; margin-bottom:8px">WEAKNESSES</strong>
+                        <ul style="margin:0; padding-left:20px; color:#ccc; font-size:0.9em">${swot.weaknesses.map(s => `<li>${s}</li>`).join('')}</ul>
+                    </div>
+                    <div style="background: rgba(66, 153, 225, 0.1); border: 1px solid rgba(66, 153, 225, 0.3); padding: 12px; border-radius: 8px;">
+                        <strong style="color: #4299e1; display:block; margin-bottom:8px">OPPORTUNITIES</strong>
+                        <ul style="margin:0; padding-left:20px; color:#ccc; font-size:0.9em">${swot.opportunities.map(s => `<li>${s}</li>`).join('')}</ul>
+                    </div>
+                    <div style="background: rgba(245, 101, 101, 0.1); border: 1px solid rgba(245, 101, 101, 0.3); padding: 12px; border-radius: 8px;">
+                        <strong style="color: #f56565; display:block; margin-bottom:8px">THREATS</strong>
+                        <ul style="margin:0; padding-left:20px; color:#ccc; font-size:0.9em">${swot.threats.map(s => `<li>${s}</li>`).join('')}</ul>
+                    </div>
+                `;
+                document.getElementById('m-swot').innerHTML = swotHtml;
+
                 document.getElementById('m-features').innerHTML = data.plan.mvp_features.map(f => 
                     `<div class="feature-item"><span class="check-icon">✓</span> <span>${f}</span></div>`
                 ).join('');
@@ -903,9 +926,17 @@ HTML_TEMPLATE = """
             <button class="close-btn" onclick="closeModal()">×</button>
             
             <div class="modal-header">
-                <h2 id="m-title" class="modal-title">Title</h2>
-                <p id="m-desc" style="color: #8899ac; margin:0">Description</p>
+                <div style="display: flex; gap: 20px; align-items: center;">
+                    <div id="m-logo"></div>
+                    <div>
+                        <h2 id="m-title" class="modal-title">Title</h2>
+                        <p id="m-desc" style="color: #8899ac; margin:0">Description</p>
+                    </div>
+                </div>
             </div>
+
+            <div class="section-header">🔍 Analisis SWOT</div>
+            <div id="m-swot" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;"></div>
 
             <div class="section-header">✨ Fitur MVP Wajib</div>
             <div id="m-features"></div>
