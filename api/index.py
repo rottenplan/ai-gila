@@ -590,7 +590,7 @@ HTML_TEMPLATE = """
                 ).join('');
                 
                 document.getElementById('m-rev').innerHTML = data.plan.revenue_projection.map(r => 
-                    `<tr><td>${r.users} User</td><td class="money">${r.revenue_fmt}</td></tr>`
+                    `<tr><td>${r.users}</td><td class="money">${r.revenue_fmt}</td></tr>`
                 ).join('');
 
                 // Update share links
@@ -946,7 +946,7 @@ HTML_TEMPLATE = """
 
             <div class="section-header">💰 Proyeksi Pendapatan</div>
             <table>
-                <thead><tr><th>Milestone Pengguna</th><th>Estimasi / Bulan</th></tr></thead>
+                <thead><tr><th>Trafik Website</th><th>Estimasi Cuan</th></tr></thead>
                 <tbody id="m-rev"></tbody>
             </table>
 

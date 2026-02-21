@@ -267,6 +267,8 @@ class Engine:
         h1 {{ font-size: 3.5rem; line-height: 1.2; margin-bottom: 20px; background: linear-gradient(to right, #fff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }}
         .subtitle {{ font-size: 1.25rem; color: #94a3b8; max-width: 600px; margin: 0 auto 40px; }}
         
+        .logo-svg {{ width: 80px; height: 80px; margin-bottom: 20px; filter: drop-shadow(0 0 10px rgba(255,255,255,0.3)); }}
+
         .btn {{ display: inline-block; background: var(--primary); color: white; padding: 16px 32px; border-radius: 50px; text-decoration: none; font-weight: bold; font-size: 1.1rem; transition: transform 0.2s; border: none; cursor: pointer; }}
         .btn:hover {{ transform: translateY(-2px); box-shadow: 0 10px 20px -10px var(--primary); }}
         
@@ -292,7 +294,10 @@ class Engine:
 <body>
     <div class="container">
         <header>
-            <div class="logo">{idea.title}</div>
+            <div class="logo" style="display:flex; align-items:center; gap:10px">
+                <div style="width:40px;height:40px">{plan['logo_svg']}</div>
+                {idea.title}
+            </div>
             <nav>
                 <a href="#features" style="color: #fff; text-decoration: none; margin-right: 20px">Fitur</a>
                 <a href="#pricing" style="color: #fff; text-decoration: none">Harga</a>
@@ -300,6 +305,9 @@ class Engine:
         </header>
         
         <section class="hero">
+            <div class="logo-svg" style="margin: 0 auto 30px;">
+                {plan['logo_svg']}
+            </div>
             <h1>{idea.title}</h1>
             <p class="subtitle">{idea.description}</p>
             <a href="#pricing" class="btn">Mulai Sekarang 🚀</a>
@@ -361,27 +369,58 @@ class Engine:
         
         # Determine base pain key from title/desc (simplified logic)
         mvp_features = ["Dashboard Analytics", "User Management", "Payment Gateway"] # Defaults
+        pain_found = ""
         for key, feats in pain_to_features.items():
             if key in idea.title.lower() or key in idea.description.lower():
                 mvp_features = feats
+                pain_found = key
                 break
         
-        # Marketing Hooks
+        # Enhanced Marketing Hooks
         hooks = [
             f"Cara termudah untuk {idea.niche} mengelola {idea.title.split('untuk')[0].strip()}.",
             f"Lupakan cara lama. Ini revolusi {idea.niche} berbasis AI.",
             f"Hemat 10+ jam per minggu dengan {idea.title}."
         ]
         
-        # Revenue Projection (Simulation)
-        price_idr = int(idea.price * 15000)
-        users_milestone = [10, 100, 1000]
-        revenue_proj = []
-        for u in users_milestone:
-            rev = u * price_idr
-            revenue_proj.append({"users": u, "revenue": rev, "revenue_fmt": f"Rp{rev:,}"})
-            
+        if pain_found:
+             hooks.append(f"Solusi {pain_found} tanpa ribet.")
         
+        # Revenue Projection (Simulation with Dynamic Conversion Rate)
+        # Higher price -> lower conversion rate
+        price_idr = int(idea.price * 15000)
+        base_conversion = 0.05  # 5% base
+        
+        # Adjust conversion based on price sensitivity
+        # If price is > 500k (33 USD), conversion drops
+        price_factor = 1.0
+        if idea.price > 33:
+            price_factor = 0.5
+        elif idea.price > 10:
+             price_factor = 0.8
+             
+        # Adjust based on model
+        model_factor = 1.0
+        if idea.model == "sekali beli":
+            model_factor = 1.5 # Easier to sell once
+        elif idea.model == "langganan":
+            model_factor = 0.9 # Harder to get commitment
+            
+        conversion_rate = base_conversion * price_factor * model_factor
+        
+        users_milestone = [100, 1000, 5000] # Visitors/Leads
+        revenue_proj = []
+        for visitors in users_milestone:
+            converted_users = int(visitors * conversion_rate)
+            if converted_users < 1: converted_users = 1
+            
+            rev = converted_users * price_idr
+            revenue_proj.append({
+                "users": f"{converted_users} (dari {visitors} traffic)", 
+                "revenue": rev, 
+                "revenue_fmt": f"Rp{rev:,}"
+            })
+            
         # SWOT Analysis
         swot = self.generate_swot(idea)
         
@@ -399,28 +438,58 @@ class Engine:
         }
     
     def generate_swot(self, idea: Idea) -> Dict:
-        """Generates SWOT analysis."""
+        """Generates SWOT analysis with contextual logic."""
+        
+        # Strengths based on Model
+        strengths = [f"Fokus spesifik pada niche {idea.niche}"]
+        if idea.model == "langganan" or idea.model == "saas":
+            strengths.append("Pendapatan berulang (Recurring Revenue) yang stabil")
+            strengths.append("Skalabilitas tinggi dengan margin profit besar")
+        elif idea.model == "sekali beli":
+            strengths.append("Tidak ada beban biaya server bulanan yang tinggi")
+            strengths.append("Cashflow cepat di awal penjualan")
+        elif idea.model == "marketplace":
+            strengths.append("Network effect yang kuat jika mencapai critical mass")
+            strengths.append("Inventori nol (tidak perlu stok barang)")
+        else:
+            strengths.append(f"Model bisnis {idea.model} yang fleksibel")
+            strengths.append("Biaya operasional rendah dengan AI")
+
+        # Weaknesses based on Price/Audience
+        weaknesses = ["Brand awareness masih nol"]
+        if idea.price < 10:
+            weaknesses.append("Margin tipis, butuh volume penjualan besar")
+        elif idea.price > 50:
+            weaknesses.append("Siklus penjualan (sales cycle) mungkin lebih lama")
+        
+        if idea.audience < 10000:
+             weaknesses.append("Market size sangat niche/kecil (limitasi growth)")
+        else:
+             weaknesses.append("Kompetisi di market luas mungkin ketat")
+             
+        weaknesses.append("Ketergantungan pada API pihak ketiga")
+
+        # Opportunities based on Trends
+        opportunities = [f"Ekspansi ke niche sejenis selain {idea.niche}"]
+        if idea.trend_score > 0.7:
+            opportunities.append("Memanfaatkan tren AI yang sedang hype untuk marketing")
+        
+        opportunities.append("Integrasi dengan tools populer (Zapier, Notion, dll)")
+        opportunities.append("Partnership dengan influencer lokal")
+
+        # Threats based on Complexity
+        threats = ["Perubahan regulasi AI"]
+        if "ekstraksi" in idea.title.lower() or "scraping" in idea.title.lower():
+             threats.append("Perubahan kebijakan privasi/API platform target")
+        
+        threats.append("Pemain besar merilis fitur serupa secara gratis")
+        threats.append("Perang harga dengan kompetitor baru")
+
         return {
-            "strengths": [
-                f"Fokus spesifik pada niche {idea.niche}",
-                "Biaya operasional rendah dengan AI",
-                f"Model bisnis {idea.model} yang fleksibel"
-            ],
-            "weaknesses": [
-                "Brand awareness masih nol",
-                "Ketergantungan pada API pihak ketiga",
-                "Tim kecil (solopreneur)"
-            ],
-            "opportunities": [
-                f"Ekspansi ke niche sejenis selain {idea.niche}",
-                "Integrasi dengan tools populer",
-                "Partnership dengan influencer lokal"
-            ],
-            "threats": [
-                "Pemain besar merilis fitur serupa",
-                "Perubahan regulasi AI",
-                "Perang harga dengan kompetitor baru"
-            ]
+            "strengths": strengths,
+            "weaknesses": weaknesses,
+            "opportunities": opportunities,
+            "threats": threats
         }
 
     def generate_logo_svg(self, idea: Idea) -> str:
