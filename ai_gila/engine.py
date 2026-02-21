@@ -522,91 +522,141 @@ class Engine:
         </svg>"""
 
     def consult(self, question: str, context: Dict = None) -> str:
-        """Enhanced rule-based consultant with context awareness."""
+        """Advanced Agentic Consultant that simulates structured reasoning."""
         q = question.lower()
         
-        # Context-aware responses
+        # 1. Define Persona & Tone
+        # The agent should be authoritative but supportive, structured, and actionable.
+        
+        # 2. Context Extraction
+        ctx_str = ""
         if context:
             title = context.get('title', 'ide bisnis ini')
             niche = context.get('niche', 'niche ini')
             model = context.get('model', 'model ini')
             price = context.get('price', 0)
-            
-            if "bagus" in q or "prospek" in q or "pendapat" in q:
-                if context.get('trend_score', 0) > 0.7:
-                    return f"Ide '{title}' sangat potensial karena sedang trending! Fokus pada niche {niche} adalah langkah cerdas. Pastikan eksekusi MVP-nya cepat."
-                else:
-                    return f"Ide '{title}' cukup solid. Walaupun niche {niche} mungkin tidak viral, tapi kebutuhan pasarnya stabil. Fokus pada retensi user."
-            
-            if "harga" in q or "mahal" in q or "murah" in q:
-                if price > 50:
-                    return f"Harga ${price} termasuk premium untuk {niche}. Pastikan Anda memberikan value lebih, misalnya support prioritas atau fitur eksklusif."
-                else:
-                    return f"Harga ${price} cukup terjangkau. Strategi volume (banyak user) sangat penting di sini. Coba tawarkan upsell nanti."
+            trend = context.get('trend_score', 0)
+            ctx_str = f"Menganalisis konteks ide '{title}' di niche '{niche}' dengan model '{model}'..."
+        
+        # 3. Knowledge Retrieval (Simulated)
+        # Check specific intent first
+        response = ""
+        
+        # Intent: Validation/Opinion
+        if any(x in q for x in ["bagus", "prospek", "pendapat", "valid", "ide", "potensi"]):
+            if context:
+                verdict = "SANGAT POTENSIAL" if trend > 0.6 else "CUKUP SOLID"
+                advice = "Manfaatkan momentum tren saat ini." if trend > 0.6 else "Fokus pada retensi user jangka panjang."
+                response = f"""
+<b>📊 Analisis Agen:</b>
+{ctx_str}
+Status: <span style='color: #48bb78; font-weight: bold;'>{verdict}</span>
 
-            if "kompetitor" in q or "saingan" in q:
-                return f"Di niche {niche}, kompetitor biasanya bermain di fitur umum. Keunggulan '{title}' ada pada spesialisasi untuk {niche}. Jangan takut head-to-head, tapi fokus pada diferensiasi."
+<b>🧠 Insight:</b>
+Ide ini memiliki skor tren {trend:.2f}. {advice}
+Niche {niche} memiliki karakteristik user yang spesifik, jadi jangan terlalu general.
 
-        # General topics
-        topics = {
-            "modal": [
-                "Untuk tahap awal, fokus pada MVP tanpa kode (No-Code) atau gunakan API murah. Estimasi modal awal bisa ditekan di bawah Rp 1 juta.",
-                "Jangan bakar uang di awal. Gunakan free tier dari Vercel/Supabase/OpenAI sebisa mungkin.",
-                "Modal terbesar adalah waktu Anda. Validasi dulu sebelum keluar uang sewa server mahal."
-            ],
-            "pemasaran": [
-                "Gunakan strategi 'Cold DM' di LinkedIn atau Instagram ke target niche spesifik.",
-                "Buat konten edukasi pendek di TikTok/Reels tentang masalah yang dihadapi niche tersebut.",
-                "Cari grup Facebook atau komunitas Discord tempat niche Anda berkumpul, lalu bantu jawab pertanyaan mereka (soft selling)."
-            ],
-            "validasi": [
-                "Jangan buat produk dulu! Buat landing page sederhana, sebar ke komunitas, dan lihat klik tombol 'Beli'.",
-                "Tanya ke 10 calon user: 'Apakah masalah ini cukup mengganggu sampai Anda mau bayar untuk solusinya?'",
-                "Pre-sale adalah validasi terbaik. Jika ada yang bayar sebelum produk jadi, itu emas."
-            ],
-            "harga": [
-                "Jangan jual terlalu murah. Niche market berani bayar mahal untuk solusi spesifik.",
-                "Mulai dari harga yang membuat Anda sedikit tidak nyaman (sedikit mahal), lalu berikan diskon untuk early adopter.",
-                "Gunakan tier pricing: Basic (murah), Pro (tengah), dan Enterprise (mahal) untuk anchoring effect."
-            ],
-            "teknis": [
-                "Gunakan stack yang Anda kuasai. Python/Flask sudah cukup. Jangan terjebak memilih teknologi canggih tapi tidak ada user.",
-                "Fokus ke fitur utama (Core Value). Fitur login sosial, dark mode, dll bisa ditunda.",
-                "Jangan over-engineering. Code yang tidak ditulis adalah code yang paling mudah dimaintain."
-            ],
-            "legal": [
-                "Di awal, jangan pusing soal PT/CV. Jalankan sebagai perseorangan dulu sampai revenue stabil.",
-                "Pastikan punya Terms of Service & Privacy Policy standar (bisa generate pakai AI).",
-                "Pisahkan rekening bisnis dan pribadi sejak hari pertama."
-            ],
-            "tim": [
-                "Sendiri (Solopreneur) lebih cepat untuk validasi. Cari co-founder jika skill Anda tidak menutup kebutuhan utama.",
-                "Outsource hal repetitif (desain logo, input data) jika ada budget kecil.",
-                "Jangan rekrut karyawan tetap sebelum Product-Market Fit."
-            ],
-            "gagal": [
-                "Gagal itu biasa. Pivot (ubah arah) adalah senjata startup.",
-                "Jika ide ini gagal, aset terbesar adalah audience/list email yang sudah Anda kumpulkan.",
-                "Fail fast. Jangan habiskan 6 bulan untuk ide yang tidak ada yang mau."
+<b>🚀 Rencana Aksi:</b>
+1. Buat landing page (gunakan fitur Export Web).
+2. Sebar ke 5 grup komunitas {niche}.
+3. Dapatkan 10 email pendaftar pertama sebelum menulis satu baris kode pun.
+"""
+            else:
+                response = """
+<b>📊 Analisis Agen:</b>
+Saya perlu konteks lebih spesifik. Apakah Anda sedang membahas ide tertentu?
+
+<b>🧠 Insight:</b>
+Secara umum, ide bagus adalah ide yang memecahkan masalah nyata yang menyakitkan (painful problem).
+
+<b>🚀 Rencana Aksi:</b>
+1. Validasi masalah ke calon user.
+2. Pastikan mereka mau membayar.
+3. Bangun MVP dalam 2 minggu.
+"""
+
+        # Intent: Pricing/Money
+        elif any(x in q for x in ["harga", "mahal", "murah", "bayar", "cuan", "duit", "profit"]):
+            if context:
+                pricing_strategy = "Premium" if price > 50 else "Volume/Mass Market"
+                response = f"""
+<b>💰 Analisis Pricing:</b>
+{ctx_str}
+Strategi: <b>{pricing_strategy}</b> (Harga: ${price})
+
+<b>🧠 Insight:</b>
+Untuk niche {niche}, harga ini { 'tergolong premium, user ekspektasi kualitas tinggi' if price > 50 else 'cukup terjangkau, mainkan kuantitas' }.
+Model {model} sangat cocok untuk menjaga cashflow { 'stabil' if model in ['saas', 'langganan'] else 'cepat di awal' }.
+
+<b>🚀 Rencana Aksi:</b>
+1. Gunakan 'Anchor Pricing' (tampilkan harga lebih mahal lalu coret).
+2. Berikan garansi uang kembali 30 hari untuk mengurangi risiko user.
+3. Tawarkan diskon 'Early Bird' 50% untuk 10 pembeli pertama.
+"""
+            else:
+                response = """
+<b>💰 Strategi Pricing:</b>
+Jangan jual terlalu murah. Niche market berani bayar mahal untuk solusi spesifik.
+
+<b>🚀 Rencana Aksi:</b>
+1. Mulai dari harga yang membuat Anda sedikit tidak nyaman (sedikit mahal).
+2. Berikan diskon untuk early adopter sebagai validasi.
+3. Jangan bersaing harga dengan pemain besar, bersainglah di value.
+"""
+
+        # Intent: Technical/Coding
+        elif any(x in q for x in ["teknis", "coding", "stack", "bikin", "buat", "cara"]):
+            response = """
+<b>🛠️ Strategi Teknis:</b>
+Jangan terjebak 'Over-Engineering'. User tidak peduli stack apa yang Anda pakai.
+
+<b>🧠 Insight:</b>
+Kecepatan adalah fitur utama startup. Python/Flask (seperti app ini) sudah sangat cukup untuk skala awal hingga 10.000 user.
+
+<b>🚀 Rencana Aksi:</b>
+1. Gunakan 'Boring Technology' (teknologi yang Anda kuasai).
+2. Fokus fitur utama (Core Value) saja. Login sosial, dark mode, dll itu nanti.
+3. Deploy secepatnya (Vercel/Railway/Render).
+"""
+
+        # Intent: Marketing/Sales
+        elif any(x in q for x in ["marketing", "promo", "jual", "pasar", "user", "traffic"]):
+            niche_txt = context.get('niche', 'target market') if context else 'target market'
+            response = f"""
+<b>📢 Strategi Growth:</b>
+Fokus: <b>Do things that don't scale</b>.
+
+<b>🧠 Insight:</b>
+Untuk {niche_txt}, iklan berbayar (Ads) di awal adalah cara membakar uang. Pendekatan organik dan personal lebih efektif.
+
+<b>🚀 Rencana Aksi:</b>
+1. <b>Cold DM:</b> Kirim pesan personal ke 50 orang di LinkedIn/IG yang sesuai target.
+2. <b>Content:</b> Buat 1 konten edukasi/solusi per hari di TikTok/Reels.
+3. <b>Community:</b> Jadilah member aktif di grup {niche_txt}, bantu jawab pertanyaan, jangan cuma spam link.
+"""
+        
+        # Fallback / General
+        else:
+            defaults = [
+                """
+<b>🤖 Agen Mode: ON</b>
+Pertanyaan menarik, tapi saya butuh lebih spesifik.
+
+<b>🚀 Saran Umum:</b>
+Fokus utama Anda saat ini seharusnya adalah: <b>Validasi -> Distribusi -> Produk</b>.
+Kebanyakan founder gagal karena membangun produk dulu baru mencari pasar. Balik prosesnya.
+""",
+                """
+<b>🤖 Agen Mode: ON</b>
+Saran saya: <b>Jangan terlalu lama berpikir (analysis paralysis).</b>
+
+<b>🚀 Rencana Aksi Hari Ini:</b>
+Apa satu hal kecil yang bisa Anda lakukan dalam 1 jam ke depan untuk memajukan bisnis ini? Lakukan itu sekarang.
+"""
             ]
-        }
+            response = self.rng.choice(defaults)
 
-        # Check for keywords
-        for key, answers in topics.items():
-            if key in q or (key == "pemasaran" and ("marketing" in q or "promosi" in q)) or \
-               (key == "teknis" and ("coding" in q or "stack" in q)) or \
-               (key == "validasi" and ("ide" in q or "tes" in q)):
-                return self.rng.choice(answers)
-
-        # Default responses with variety
-        defaults = [
-            "Pertanyaan menarik. Fokus utama Anda saat ini seharusnya adalah: Validasi -> Distribusi -> Produk. Apakah Anda sudah memvalidasi ide ke calon user?",
-            "Coba pikirkan: Apa satu hal yang bisa Anda lakukan HARI INI untuk mendapatkan user pertama?",
-            "Saran saya: Jangan terlalu lama berpikir (analysis paralysis). Lakukan tindakan kecil yang nyata sekarang.",
-            "Bisa diperjelas? Apakah ini soal strategi bisnis atau masalah teknis?",
-            "Intinya adalah execution. Ide itu murah, eksekusi itu mahal. Apa langkah konkret Anda selanjutnya?"
-        ]
-        return self.rng.choice(defaults)
+        return response.strip()
 
 
 
