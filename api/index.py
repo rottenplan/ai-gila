@@ -1,5 +1,6 @@
 from flask import Flask, render_template_string, request, jsonify
 from pathlib import Path
+from dataclasses import asdict
 from ai_gila.engine import Engine
 
 app = Flask(__name__)
@@ -115,6 +116,38 @@ HTML_TEMPLATE = """
             left: 100%;
         }
 
+        /* Tabs */
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: 1px solid var(--glass-border);
+            color: var(--text-muted);
+            padding: 12px 24px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.2);
+        }
+
+        .tab-btn:hover {
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
         /* Cards */
         .ideas-grid {
             display: grid;
@@ -131,6 +164,37 @@ HTML_TEMPLATE = """
             animation: slideUp 0.5s ease-out forwards;
             opacity: 0;
             transform: translateY(20px);
+            position: relative;
+        }
+
+        .btn-save {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            color: var(--text-muted);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            z-index: 10;
+        }
+
+        .btn-save:hover {
+            background: rgba(255,255,255,0.1);
+            transform: scale(1.1);
+        }
+
+        .btn-save.saved {
+            background: var(--accent-secondary);
+            color: #fff;
+            border-color: var(--accent-secondary);
+            box-shadow: 0 0 10px rgba(189, 0, 255, 0.4);
         }
 
         .idea-card:nth-child(1) { animation-delay: 0.1s; }
@@ -566,8 +630,133 @@ HTML_TEMPLATE = """
             }
         }
 
-        // Allow Enter key to send
+        // Tabs & Saved Ideas System
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`tab-${tab}`).classList.add('active');
+            
+            if (tab === 'explore') {
+                document.getElementById('explore-view').style.display = 'block';
+                document.getElementById('saved-view').style.display = 'none';
+            } else {
+                document.getElementById('explore-view').style.display = 'none';
+                document.getElementById('saved-view').style.display = 'grid';
+                renderSaved();
+            }
+        }
+
+        function getSavedIdeas() {
+            try {
+                return JSON.parse(localStorage.getItem('saved_ideas') || '[]');
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function handleSaveClick(btn) {
+            const card = btn.closest('.idea-card');
+            // dataset.idea is a string, need to parse it
+            // Note: In template we used |tojson|safe, which creates a JSON string.
+            // But HTML attribute might have issues if not handled carefully.
+            // Let's rely on JSON.parse.
+            try {
+                const idea = JSON.parse(card.dataset.idea);
+                const score = card.dataset.score;
+                toggleSave(idea, score, btn);
+            } catch (e) {
+                console.error("Error parsing idea data", e);
+            }
+        }
+
+        function toggleSave(idea, score, btn) {
+            let saved = getSavedIdeas();
+            const index = saved.findIndex(i => i.idea.id === idea.id);
+            
+            if (index >= 0) {
+                // Remove
+                saved.splice(index, 1);
+                btn.classList.remove('saved');
+            } else {
+                // Add
+                saved.push({ idea, score });
+                btn.classList.add('saved');
+                
+                // Animation
+                btn.style.transform = "scale(1.4)";
+                setTimeout(() => btn.style.transform = "scale(1)", 200);
+            }
+            
+            localStorage.setItem('saved_ideas', JSON.stringify(saved));
+            updateSavedCount();
+            
+            // If in saved view, refresh
+            if (document.getElementById('saved-view').style.display !== 'none') {
+                renderSaved();
+            }
+        }
+
+        function updateSavedCount() {
+            const count = getSavedIdeas().length;
+            document.getElementById('saved-count').innerText = count;
+        }
+
+        function renderSaved() {
+            const container = document.getElementById('saved-view');
+            const saved = getSavedIdeas();
+            
+            if (saved.length === 0) {
+                container.innerHTML = `<div style="text-align:center; color:#8899ac; grid-column:1/-1; padding:40px; border: 1px dashed var(--glass-border); border-radius: 16px;">Belum ada ide yang disimpan.</div>`;
+                return;
+            }
+            
+            container.innerHTML = saved.map(item => {
+                const i = item.idea;
+                const s = item.score;
+                const price = new Intl.NumberFormat('id-ID').format(i.price * 15000);
+                const audience = new Intl.NumberFormat('en-US').format(i.audience);
+                const scoreFmt = (parseFloat(s) * 10).toFixed(1);
+                
+                // Capitalize model
+                const model = i.model.charAt(0).toUpperCase() + i.model.slice(1);
+                
+                return `
+                <div class="idea-card" data-idea="${JSON.stringify(i).replace(/"/g, '&quot;')}" data-score="${s}">
+                    <button class="btn-save saved" onclick="handleSaveClick(this)">🔖</button>
+                    <div class="card-top">
+                        <h3 class="idea-title">
+                            ${i.title}
+                            ${i.trend_score > 0.7 ? '<span class="trending">🔥 Trending</span>' : ''}
+                        </h3>
+                        <span class="score-badge">${scoreFmt}/10</span>
+                    </div>
+                    <p class="idea-desc">${i.description}</p>
+                    <div class="card-stats">
+                        <div class="stat-pill"><span class="stat-icon">📦</span> ${model}</div>
+                        <div class="stat-pill"><span class="stat-icon">💰</span> Rp${price}</div>
+                        <div class="stat-pill"><span class="stat-icon">👥</span> ~${audience} Target</div>
+                    </div>
+                    <button id="btn-${i.id}" class="btn-analyze" onclick="analyzeIdea('${i.id}')">
+                        🔍 Bedah Bisnis & Potensi Cuan
+                    </button>
+                </div>`;
+            }).join('');
+        }
+
+        // Initialize saved status on load
         document.addEventListener('DOMContentLoaded', () => {
+            updateSavedCount();
+            const savedIds = new Set(getSavedIdeas().map(s => s.idea.id));
+            
+            document.querySelectorAll('#explore-view .idea-card').forEach(card => {
+                try {
+                    const idea = JSON.parse(card.dataset.idea);
+                    if (savedIds.has(idea.id)) {
+                        card.querySelector('.btn-save').classList.add('saved');
+                    }
+                } catch(e) {}
+            });
+            
+            // Chat enter key
             document.getElementById('chat-input').addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') sendChat();
             });
@@ -587,41 +776,55 @@ HTML_TEMPLATE = """
             </button>
         </form>
 
-        {% if ideas %}
-        <div class="ideas-grid">
-            {% for idea, score in ideas %}
-            <div class="idea-card">
-                <div class="card-top">
-                    <h3 class="idea-title">
-                        {{ idea.title }}
-                        {% if idea.trend_score > 0.7 %}
-                        <span class="trending">🔥 Trending</span>
-                        {% endif %}
-                    </h3>
-                    <span class="score-badge">{{ "%.1f"|format(score * 10) }}/10</span>
-                </div>
-                
-                <p class="idea-desc">{{ idea.description }}</p>
-                
-                <div class="card-stats">
-                    <div class="stat-pill">
-                        <span class="stat-icon">📦</span> {{ idea.model|title }}
-                    </div>
-                    <div class="stat-pill">
-                        <span class="stat-icon">💰</span> Rp{{ "{:,}".format((idea.price * 15000)|int) }}
-                    </div>
-                    <div class="stat-pill">
-                        <span class="stat-icon">👥</span> ~{{ "{:,}".format(idea.audience) }} Target
-                    </div>
-                </div>
-
-                <button id="btn-{{ idea.id }}" class="btn-analyze" onclick="analyzeIdea('{{ idea.id }}')">
-                    🔍 Bedah Bisnis & Potensi Cuan
-                </button>
-            </div>
-            {% endfor %}
+        <div class="tabs">
+            <button class="tab-btn active" id="tab-explore" onclick="switchTab('explore')">🚀 Explore</button>
+            <button class="tab-btn" id="tab-saved" onclick="switchTab('saved')">🔖 Saved (<span id="saved-count">0</span>)</button>
         </div>
-        {% endif %}
+
+        <div id="explore-view">
+            {% if ideas %}
+            <div class="ideas-grid">
+                {% for idea, score in ideas %}
+                <div class="idea-card" data-idea="{{ idea|tojson }}" data-score="{{ score }}">
+                    <button class="btn-save" onclick="handleSaveClick(this)">🔖</button>
+                    <div class="card-top">
+                        <h3 class="idea-title">
+                            {{ idea.title }}
+                            {% if idea.trend_score > 0.7 %}
+                            <span class="trending">🔥 Trending</span>
+                            {% endif %}
+                        </h3>
+                        <span class="score-badge">{{ "%.1f"|format(score * 10) }}/10</span>
+                    </div>
+                    
+                    <p class="idea-desc">{{ idea.description }}</p>
+                    
+                    <div class="card-stats">
+                        <div class="stat-pill">
+                            <span class="stat-icon">📦</span> {{ idea.model|title }}
+                        </div>
+                        <div class="stat-pill">
+                            <span class="stat-icon">💰</span> Rp{{ "{:,}".format((idea.price * 15000)|int) }}
+                        </div>
+                        <div class="stat-pill">
+                            <span class="stat-icon">👥</span> ~{{ "{:,}".format(idea.audience) }} Target
+                        </div>
+                    </div>
+
+                    <button id="btn-{{ idea.id }}" class="btn-analyze" onclick="analyzeIdea('{{ idea.id }}')">
+                        🔍 Bedah Bisnis & Potensi Cuan
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div style="text-align: center; color: #666; padding: 40px; border: 1px dashed var(--glass-border); border-radius: 16px;">
+                <p>Belum ada ide yang digenerate. Klik tombol di atas!</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <div id="saved-view" class="ideas-grid" style="display: none;"></div>
     </div>
 
     <!-- Chat Widget -->
@@ -693,7 +896,7 @@ def index():
         # Generate and rank
         raw_ideas = eng.generate_ideas(limit=20)
         ranked = eng.rank(raw_ideas, top_k=5)
-        ideas_data = ranked
+        ideas_data = [(asdict(i), s) for i, s in ranked]
         
         # Cache for analysis
         global IDEA_CACHE
