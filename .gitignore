@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.DS_Store
+.env
+venv/
+output/
+landing_pages/
+ai_gila/data/*.json
+!ai_gila/data/state.json.example
